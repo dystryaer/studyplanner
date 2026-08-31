@@ -4,6 +4,7 @@ import {
   formatSelectedDate,
   formatDueDate,
   parseLocalDate,
+  formatWeekdayShort,
 } from "../utils/date";
 import {
   ChevronLeftIcon,
@@ -142,7 +143,7 @@ export default function CalendarPanel({
         </div>
 
         <p>
-          {showDate ? `${formatDueDate(event.date)} · ` : ""}
+          {showDate ? `${formatWeekdayShort(event.date)} · ${formatDueDate(event.date)} · ` : ""}
           {event.startTime} - {event.endTime} · {categoryLabel}
         </p>
       </article>
@@ -344,8 +345,8 @@ export default function CalendarPanel({
                     </div>
 
                     <p>
-                      {formatDueDate(event.date)} · {event.startTime} - {event.endTime} ·{" "}
-                      {categoryLabel}
+                      {formatWeekdayShort(event.date)} · {formatDueDate(event.date)}
+                       · {event.startTime} - {event.endTime} ·{" "}{categoryLabel}
                     </p>
                   </article>
                 </div>

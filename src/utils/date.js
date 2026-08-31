@@ -60,3 +60,11 @@ export function getDueState(value) {
   if (diffInDays <= 2) return 'soon'
   return ''
 }
+
+export function formatWeekdayShort(dateString) {
+  const date = parseLocalDate(dateString);
+
+  return date.toLocaleDateString("en-GB", {
+    weekday: "short",
+  });
+}

@@ -1,10 +1,12 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Topbar from "./components/Topbar";
 import Sidebar from "./components/Sidebar";
 import WeekBoard from "./components/WeekBoard";
 import SettingsModal from "./components/SettingsModal";
 import TaskCard from "./components/TaskCard";
 import { usePlannerData } from "./hooks/usePlannerData";
+import PlannerStatus from "./components/PlannerStatus";
+import { getTaskContainer, getTasksByContainer } from "./utils/plannerSelectors.js";
 
 import {
   DndContext,
@@ -25,7 +27,9 @@ import "./styles/sidebar.css";
 import "./styles/settings-modal.css";
 
 function App({ authUser, onLogout }) {
-  const planner = usePlannerData();
+  const planner = usePlannerData(authUser.id);
+  const hasOpened = useRef(false);
+  if (planner.canEdit) hasOpened.current = true;
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [activeTaskId, setActiveTaskId] = useState(null);
   const [activeTaskWidth, setActiveTaskWidth] = useState(null);
@@ -53,34 +57,13 @@ function App({ authUser, onLogout }) {
   }, [activeTaskId, planner.weekTasks, planner.backlog, planner.dailyTasks]);
 
   function getContainerId(id) {
-    if (id === "week" || id === "week-done" || id === "backlog" || id === "daily") {
-      return id;
-    }
-
-    if (planner.weekTasks.some((task) => task.id === id)) {
-      const task = planner.weekTasks.find((item) => item.id === id);
-      return task?.status === "done" ? "week-done" : "week";
-    }
-
-    if (planner.backlog.some((task) => task.id === id)) return "backlog";
-    if (planner.dailyTasks.some((task) => task.id === id)) return "daily";
-
-    return null;
+    if (["week", "week-done", "backlog", "daily"].includes(id)) return id;
+    const task = [...planner.data.tasks, ...planner.dailyTasks].find(item => item.id === id);
+    return task ? getTaskContainer(task, planner.activeWeekKey) : null;
   }
 
   function getItemsByContainer(containerId) {
-    if (containerId === "week") {
-      return planner.weekTasks.filter((task) => task.status !== "done");
-    }
-
-    if (containerId === "week-done") {
-      return planner.weekTasks.filter((task) => task.status === "done");
-    }
-
-    if (containerId === "backlog") return planner.backlog;
-    if (containerId === "daily") return planner.dailyTasks;
-
-    return [];
+    return getTasksByContainer(planner.data.tasks, planner.dailyTasks, containerId, planner.activeWeekKey);
   }
 
   function getIndexInContainer(taskId, containerId) {
@@ -122,9 +105,7 @@ function App({ authUser, onLogout }) {
       const targetItems = getItemsByContainer(toContainer);
 
       if (toContainer === "daily") {
-        if (typeof planner.moveDailyTaskByDnD === "function") {
-          planner.moveDailyTaskByDnD(activeId, targetItems.length);
-        }
+        planner.moveDailyTaskByDnD(activeId, targetItems.length);
         return;
       }
 
@@ -136,16 +117,21 @@ function App({ authUser, onLogout }) {
     if (targetIndex === -1) return;
 
     if (toContainer === "daily") {
-      if (typeof planner.moveDailyTaskByDnD === "function") {
-        planner.moveDailyTaskByDnD(activeId, targetIndex);
-      }
+      planner.moveDailyTaskByDnD(activeId, targetIndex);
       return;
     }
 
     planner.moveTaskByDnD(activeId, toContainer, targetIndex);
   }
 
+  if (!planner.canEdit && !hasOpened.current) {
+    return <div className="planner-start"><PlannerStatus planner={planner} /><button onClick={onLogout}>Sign out</button></div>;
+  }
+
   return (
+    <>
+    <PlannerStatus planner={planner} />
+    <div inert={!planner.canEdit && planner.status !== "error" ? "" : undefined}>
     <DndContext
       sensors={sensors}
       collisionDetection={closestCorners}
@@ -157,12 +143,6 @@ function App({ authUser, onLogout }) {
         <Sidebar
           sidebarMode={planner.sidebarMode}
           setSidebarMode={planner.setSidebarMode}
-          taskForm={planner.taskForm}
-          setTaskForm={planner.setTaskForm}
-          eventForm={planner.eventForm}
-          setEventForm={planner.setEventForm}
-          dailyTaskForm={planner.dailyTaskForm}
-          setDailyTaskForm={planner.setDailyTaskForm}
           addTask={planner.addTask}
           addEvent={planner.addEvent}
           addDailyTask={planner.addDailyTask}
@@ -183,7 +163,6 @@ function App({ authUser, onLogout }) {
             weekLabel={planner.weekLabel}
             plannedWeekTasksCount={planner.plannedWeekTasksCount}
             doneWeekTasksCount={planner.doneWeekTasksCount}
-            doneDailyTasksCount={planner.doneDailyTasksCount}
             weekEventsCount={planner.weekEventsCount}
             goToPreviousWeek={planner.goToPreviousWeek}
             goToCurrentWeek={planner.goToCurrentWeek}
@@ -196,6 +175,8 @@ function App({ authUser, onLogout }) {
 
           <WeekBoard
             weekTasks={planner.weekTasks}
+            plannedWeekTasks={planner.plannedWeekTasks}
+            doneWeekTasks={planner.doneWeekTasks}
             taskCategories={planner.taskCategories}
             toggleDone={planner.toggleDone}
             sendTaskToBacklog={planner.sendTaskToBacklog}
@@ -211,7 +192,6 @@ function App({ authUser, onLogout }) {
             setSelectedDate={planner.setSelectedDate}
             removeEvent={planner.removeEvent}
             removeTask={planner.removeTask}
-            weekEvents={planner.weekEvents}
             weekRange={planner.weekRange}
             activeWeekDate={planner.activeWeekDate}
             setWeekOffset={planner.setWeekOffset}
@@ -240,7 +220,6 @@ function App({ authUser, onLogout }) {
               }
               compact={activeTask.bucket === "backlog" || activeTask.bucket === "daily"}
               hideWeekAction={activeTask.bucket === "daily"}
-              hideBacklogAction={activeTask.bucket === "daily"}
             />
           </div>
         ) : null}
@@ -251,10 +230,12 @@ function App({ authUser, onLogout }) {
           onClose={() => setSettingsOpen(false)}
           updateUserSettings={planner.updateUserSettings}
           userSettings={planner.data.userSettings}
-          setTheme={planner.setTheme}
+          effectiveTheme={planner.theme}
         />
       )}
     </DndContext>
+    </div>
+    </>
   );
 }
 

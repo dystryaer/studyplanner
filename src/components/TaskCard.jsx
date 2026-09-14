@@ -12,18 +12,17 @@ export default function TaskCard({
   onDelete,
   compact = false,
   hideWeekAction = false,
-  hideBacklogAction = false,
   hideDeleteAction = false,
   donePanel = false,
 }) {
   const fallbackTaskCategory = defaultTaskCategories[0];
+  const legacyLabel = task.subject ?? task.legacyCategoryLabel;
 
   const category =
     taskCategories.find((item) => item.id === task.categoryId) ??
-    taskCategories.find((item) => item.label === task.subject) ??
-    fallbackTaskCategory;
+    taskCategories.find((item) => item.label === legacyLabel);
 
-  const categoryLabel = category?.label ?? task.subject ?? "Other";
+  const categoryLabel = category?.label ?? legacyLabel ?? fallbackTaskCategory.label;
   const baseColor = category?.baseColor ?? fallbackTaskCategory.baseColor;
   const { softBg, borderColor, textColor } = getCategoryCardColors(baseColor);
 

@@ -1,4 +1,4 @@
-import { plannerActionTypes } from "./plannerReducer";
+import { plannerActionTypes } from "./plannerReducer.js";
 
 export const addTaskAction = (task) => ({
   type: plannerActionTypes.ADD_TASK,
@@ -71,9 +71,4 @@ export const moveDailyTaskByDnDAction = (taskId, targetIndex) => ({
 export const updateUserSettingsAction = (settings) => ({
   type: plannerActionTypes.UPDATE_USER_SETTINGS,
   payload: settings,
-});
-
-export const reorderDailyTasksAction = (taskId, targetIndex) => ({
-  type: plannerActionTypes.REORDER_DAILY_TASKS,
-  payload: { taskId, targetIndex },
 });

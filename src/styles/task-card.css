@@ -23,7 +23,6 @@
   border-color: color-mix(in srgb, #e6c27f 30%, var(--color-border));
 }
 
-/* Overdue – etwas satter, aber nicht zu stark */
 .task-card.subject-numa.due-overdue {
   background: color-mix(in srgb, #fdbeff 20%, var(--color-surface));
   border-color: color-mix(in srgb, #e8a7ea 42%, var(--color-border));
@@ -150,8 +149,26 @@
   font-weight: 700;
 }
 
-.sortable-task-card {
+.task-subject-swatch {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.task-planned {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.drag-handle {
   touch-action: none;
+  cursor: grab;
+}
+
+.sortable-task-card {
+  min-width: 0;
 }
 
 .sortable-task-card.is-dragging {
@@ -166,7 +183,7 @@
     border-color var(--transition-interactive);
 }
 
-.droppable-task-list.is-drop-over {
+.is-drop-over {
   background: color-mix(in srgb, var(--color-primary) 8%, transparent);
   box-shadow: inset 0 0 0 1px
     color-mix(in srgb, var(--color-primary) 28%, var(--color-border));

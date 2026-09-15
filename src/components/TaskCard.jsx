@@ -1,4 +1,4 @@
-import { formatDueDate, getDueState } from "../utils/date";
+import { formatDueDate, formatTimeRange, getDueState } from "../utils/date";
 import { getCategoryCardColors } from "../utils/color";
 import { UndoIcon, CheckIcon, WeekIcon, BacklogIcon, CloseIcon } from "./Icons";
 import { defaultTaskCategories } from "../data/defaultCategories";
@@ -10,10 +10,13 @@ export default function TaskCard({
   onBacklog,
   onMoveToWeek,
   onDelete,
+  onMove,
+  onEdit,
   compact = false,
   hideWeekAction = false,
-  hideDeleteAction = false,
   donePanel = false,
+  dragHandle = null,
+  now,
 }) {
   const fallbackTaskCategory = defaultTaskCategories[0];
   const legacyLabel = task.subject ?? task.legacyCategoryLabel;
@@ -26,9 +29,13 @@ export default function TaskCard({
   const baseColor = category?.baseColor ?? fallbackTaskCategory.baseColor;
   const { softBg, borderColor, textColor } = getCategoryCardColors(baseColor);
 
-  const dueState = getDueState(task.due);
+  const dueState = getDueState(task.due, now);
   const isUrgent = dueState === "overdue";
   const showReopenButton = donePanel || task.status === "done";
+  const slot = task.plannedSlot;
+  const plannedLabel = slot
+    ? `Planned for: ${formatDueDate(slot.date)}${formatTimeRange(slot.startTime, slot.endTime) ? ` · ${formatTimeRange(slot.startTime, slot.endTime)}` : ""}`
+    : null;
 
   return (
     <article
@@ -38,9 +45,13 @@ export default function TaskCard({
       style={{ background: softBg, borderColor, color: textColor }}
     >
       <div className="task-top">
-        <span className="task-subject">{categoryLabel}</span>
+        <span className="task-subject">
+          <span className="task-subject-swatch" style={{ background: baseColor }} aria-hidden="true" />
+          {categoryLabel}
+        </span>
 
         <div className="task-actions task-actions-top">
+          {dragHandle}
           <button
             type="button"
             onClick={() => onDone(task.id)}
@@ -60,7 +71,7 @@ export default function TaskCard({
               >
                 <WeekIcon />
               </button>
-            ) : (
+            ) : !onMove ? (
               <button
                 type="button"
                 onClick={() => onBacklog(task.id)}
@@ -69,9 +80,21 @@ export default function TaskCard({
               >
                 <BacklogIcon />
               </button>
-            ))}
+            ) : null)}
 
-          {!hideDeleteAction && (
+          {onMove ? (
+            <button type="button" onClick={() => onMove(task)} aria-label="Move to" title="Move to">
+              Move to
+            </button>
+          ) : null}
+
+          {onEdit ? (
+            <button type="button" onClick={() => onEdit(task)} aria-label="Edit task" title="Edit task">
+              Edit
+            </button>
+          ) : null}
+
+          {onDelete && (
             <button
               type="button"
               onClick={() => onDelete?.(task.id)}
@@ -88,14 +111,16 @@ export default function TaskCard({
         <span className="task-title-text">{task.title}</span>
       </h3>
 
+      {plannedLabel ? <p className="task-planned">{plannedLabel}</p> : null}
+
       {task.due && (
         <p className={`task-due ${dueState === "soon" ? "task-due-soon" : ""}`}>
           {isUrgent && (
             <span aria-hidden="true" className="task-alert">
-              ❗{" "}
+              !{" "}
             </span>
           )}
-          Due: {formatDueDate(task.due)}
+          Due date: {formatDueDate(task.due)}
         </p>
       )}
     </article>

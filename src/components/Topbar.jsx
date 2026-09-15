@@ -19,6 +19,9 @@ export default function Topbar({
   onOpenSettings,
   authUser,
   onLogout,
+  mainView,
+  onMainViewChange,
+  showViewSwitch = false,
 }) {
   function Stat({ label, value }) {
     return (
@@ -36,6 +39,13 @@ export default function Topbar({
           <h2>Week {getWeekNumber(activeWeekDate)}</h2>
           <p className="week-label">{weekLabel}</p>
         </div>
+
+        {showViewSwitch ? (
+          <div className="view-switch" role="tablist" aria-label="Main views">
+            <button type="button" className={mainView === "week" ? "is-active" : ""} onClick={() => onMainViewChange("week")}>Week</button>
+            <button type="button" className={mainView === "calendar" ? "is-active" : ""} onClick={() => onMainViewChange("calendar")}>Calendar</button>
+          </div>
+        ) : null}
 
         <div className="week-actions">
           <button

@@ -150,6 +150,14 @@ export function MoonIcon() {
   );
 }
 
+export function GripIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M8 7h.01M8 12h.01M8 17h.01M16 7h.01M16 12h.01M16 17h.01" />
+    </svg>
+  );
+}
+
 export function LogoutIcon() {
   return (
     <svg

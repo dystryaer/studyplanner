@@ -4,22 +4,16 @@ import {
   formatSelectedDate,
   formatDueDate,
   parseLocalDate,
-  formatWeekdayShort,
 } from "../utils/date";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   TodayIcon,
-  CloseIcon,
 } from "./Icons";
-import { mixHex, getReadableTextColor } from "../utils/color";
-import { defaultEventCategories } from "../data/defaultCategories";
+import DroppableDay from "./DroppableDay";
+import EventCard from "./EventCard";
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-function formatEventRangeLabel(start, end) {
-  return `${formatDueDate(toDateKey(start))} - ${formatDueDate(toDateKey(end))}`;
-}
 
 export default function CalendarPanel({
   calendarMonthLabel,
@@ -32,6 +26,8 @@ export default function CalendarPanel({
   setCalendarDate,
   setSelectedDate,
   removeEvent,
+  onEditEvent,
+  onMoveEvent,
   allEvents = [],
   weekRange,
   activeWeekDate,
@@ -106,50 +102,6 @@ export default function CalendarPanel({
       });
   }, [allEvents, normalizedRange]);
 
-  function renderEventCard(event, showDate = false) {
-    const category =
-      eventCategories.find((item) => item.id === event.categoryId) ||
-      defaultEventCategories.find((item) => item.id === event.categoryId);
-
-    const categoryLabel = category?.label ?? "Other";
-    const baseColor = category?.baseColor ?? "#ffeedb";
-    const cardBg = mixHex(baseColor, "#fbfbf8", 0.88);
-    const cardBorder = mixHex(baseColor, "#d4d1ca", 0.45);
-    const cardText = getReadableTextColor(cardBg);
-
-    return (
-      <article
-        key={event.id}
-        className={`event-card ${event.categoryId ?? "other"}`}
-        role="group"
-        aria-label={event.title}
-        style={{
-          background: cardBg,
-          borderColor: cardBorder,
-          color: cardText,
-        }}
-      >
-        <div className="event-card-top">
-          <strong>{event.title}</strong>
-
-          <button
-            type="button"
-            onClick={() => removeEvent(event.id)}
-            aria-label="Delete Event"
-            title="Delete Event"
-          >
-            <CloseIcon />
-          </button>
-        </div>
-
-        <p>
-          {showDate ? `${formatWeekdayShort(event.date)} · ${formatDueDate(event.date)} · ` : ""}
-          {event.startTime} - {event.endTime} · {categoryLabel}
-        </p>
-      </article>
-    );
-  }
-
   function getMonthLabel(dateString) {
     const date = parseLocalDate(dateString);
     return date.toLocaleDateString("en-GB", {
@@ -211,9 +163,12 @@ export default function CalendarPanel({
           const hasEvents = eventDates.has(dateKey);
 
           return (
-            <button
+            <DroppableDay
               key={dateKey}
+              as="button"
               type="button"
+              id={`calendar-day:${dateKey}`}
+              date={dateKey}
               className={[
                 "calendar-day-btn",
                 !isCurrentMonth ? "is-muted" : "",
@@ -238,7 +193,7 @@ export default function CalendarPanel({
               }`}
             >
               <span className="calendar-day-number">{day.date.getDate()}</span>
-            </button>
+            </DroppableDay>
           );
         })}
       </div>
@@ -253,7 +208,17 @@ export default function CalendarPanel({
           <p className="empty-copy">No events on this day.</p>
         ) : (
           <div className="event-list">
-            {selectedDateEvents.map((event) => renderEventCard(event))}
+            {selectedDateEvents.map((event) => (
+              <EventCard
+                key={`details-${event.id}`}
+                event={event}
+                eventCategories={eventCategories}
+                surface="calendar"
+                onEdit={onEditEvent}
+                onMove={onMoveEvent}
+                onDelete={removeEvent}
+              />
+            ))}
           </div>
         )}
       </div>
@@ -303,52 +268,22 @@ export default function CalendarPanel({
 
               const showMonthDivider = index === 0 || currentMonth !== previousMonth;
 
-              const category =
-                eventCategories.find((item) => item.id === event.categoryId) ||
-                defaultEventCategories.find((item) => item.id === event.categoryId);
-
-              const categoryLabel = category?.label ?? "Other";
-              const baseColor = category?.baseColor ?? "#ffeedb";
-              const cardBg = mixHex(baseColor, "#fbfbf8", 0.88);
-              const cardBorder = mixHex(baseColor, "#d4d1ca", 0.45);
-              const cardText = getReadableTextColor(cardBg);
-
               return (
-                <div key={event.id} className="event-list-group">
+                <div key={`timeline-${event.id}`} className="event-list-group">
                   {showMonthDivider && (
                     <div className="event-month-divider">
                       <span>{currentMonth}</span>
                     </div>
                   )}
-
-                  <article
-                    className={`event-card ${event.categoryId ?? "other"}`}
-                    role="group"
-                    aria-label={event.title}
-                    style={{
-                      background: cardBg,
-                      borderColor: cardBorder,
-                      color: cardText,
-                    }}
-                  >
-                    <div className="event-card-top">
-                      <strong>{event.title}</strong>
-
-                      <button
-                        type="button"
-                        onClick={() => removeEvent(event.id)}
-                        aria-label="Delete Event"
-                        title="Delete Event"
-                      >
-                        <CloseIcon />
-                      </button>
-                    </div>
-
-                    <p>
-                      {formatWeekdayShort(event.date)} · {formatDueDate(event.date)}
-                       · {event.startTime} - {event.endTime} ·{" "}{categoryLabel}
-                    </p>
-                  </article>
+                  <EventCard
+                    event={event}
+                    eventCategories={eventCategories}
+                    surface="timeline"
+                    showDate
+                    onEdit={onEditEvent}
+                    onMove={onMoveEvent}
+                    onDelete={removeEvent}
+                  />
                 </div>
               );
             })}

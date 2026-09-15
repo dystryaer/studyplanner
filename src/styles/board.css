@@ -29,7 +29,7 @@
 }
 
 .board-main .task-list {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .backlog-panel .task-list {

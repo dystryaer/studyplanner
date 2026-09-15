@@ -5,12 +5,20 @@ export default function DroppableTaskList({
   children,
   className = "",
   isEmpty = false,
+  destType,
+  categoryId,
+  disabled = false,
+  weekKey,
+  date,
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id,
+    disabled,
     data: {
-      type: "container",
-      containerId: id,
+      destType,
+      categoryId,
+      weekKey,
+      date,
     },
   });
 

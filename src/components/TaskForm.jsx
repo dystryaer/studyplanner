@@ -75,7 +75,9 @@ export default function TaskForm({ addTask, taskCategories = [] }) {
           ))}
         </select>
 
+        <label htmlFor="new-task-due">Due date (optional)</label>
         <input
+          id="new-task-due"
           type="date"
           lang="en-GB"
           value={due}

@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import { formatDate, toDateKey } from "../utils/date";
-import { buildCalendarDays, getStartOfWeek, getWeekKey } from "../utils/calendar";
+import { buildCalendarDays, getStartOfWeek, getWeekKey, shiftWeekKey } from "../utils/calendar";
 import {
-  countTasksByStatus,
+  getAgendaDays,
   getBacklogTasks,
   getEventDates,
+  getReviewTasks,
   getSelectedDateEvents,
   getWeekEvents,
   getWeekTasks,
@@ -78,14 +79,26 @@ export function usePlannerSelectors({ data, weekOffset, calendarDate, selectedDa
     () => getTasksByContainer(data.tasks, data.dailyTasks, "week-done", activeWeekKey), [data.tasks, data.dailyTasks, activeWeekKey]
   );
 
-  const doneDailyTasksCount = useMemo(
-    () => countTasksByStatus(dailyTasks, "done"),
-    [dailyTasks]
+  const currentWeekKey = getWeekKey(today);
+
+  const reviewTasks = useMemo(
+    () => getReviewTasks(data.tasks, currentWeekKey),
+    [data.tasks, currentWeekKey]
   );
+
+  const agendaDays = useMemo(
+    () => getAgendaDays(data.events, data.tasks, weekRange),
+    [data.events, data.tasks, weekRange]
+  );
+
+  const prevWeekKey = useMemo(() => shiftWeekKey(activeWeekKey, -1), [activeWeekKey]);
+  const nextWeekKey = useMemo(() => shiftWeekKey(activeWeekKey, 1), [activeWeekKey]);
 
   return {
     activeWeekDate,
     activeWeekKey,
+    prevWeekKey,
+    nextWeekKey,
     weekLabel,
     weekRange,
     weekEvents,
@@ -98,11 +111,11 @@ export function usePlannerSelectors({ data, weekOffset, calendarDate, selectedDa
     backlog,
     weekTasks,
     dailyTasks,
-    plannedWeekTasks,
-    doneWeekTasks,
+    currentWeekKey,
+    reviewTasks,
+    agendaDays,
     plannedWeekTasksCount: plannedWeekTasks.length,
     doneWeekTasksCount: doneWeekTasks.length,
-    doneDailyTasksCount,
     taskCategories,
     eventCategories,
     allEvents: data.events ?? [],

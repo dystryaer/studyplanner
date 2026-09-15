@@ -28,6 +28,40 @@ export function getWeekKey(date) {
   return `${year}-W${String(week).padStart(2, "0")}`;
 }
 
+export function parseWeekKey(weekKey) {
+  const match = /^(\d{4})-W(\d{2})$/.exec(String(weekKey));
+  if (!match) return null;
+  const year = Number(match[1]);
+  const week = Number(match[2]);
+  const lastWeek = getIsoWeek(new Date(year, 11, 28)).week;
+  return week >= 1 && week <= lastWeek ? { year, week } : null;
+}
+
+export function getMondayOfWeekKey(weekKey) {
+  const parsed = parseWeekKey(weekKey);
+  if (!parsed) return null;
+  const jan4 = new Date(parsed.year, 0, 4);
+  const monday = getStartOfWeek(jan4);
+  monday.setDate(monday.getDate() + (parsed.week - 1) * 7);
+  return monday;
+}
+
+export function shiftWeekKey(weekKey, delta) {
+  const monday = getMondayOfWeekKey(weekKey);
+  if (!monday) return null;
+  monday.setDate(monday.getDate() + delta * 7);
+  return getWeekKey(monday);
+}
+
+export function getWeekDays(startDate) {
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(startDate);
+    date.setHours(0, 0, 0, 0);
+    date.setDate(startDate.getDate() + index);
+    return date;
+  });
+}
+
 export function buildCalendarDays(baseDate) {
   const year = baseDate.getFullYear();
   const month = baseDate.getMonth();

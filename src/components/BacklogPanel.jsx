@@ -9,7 +9,10 @@ export default function BacklogPanel({
   sendTaskToBacklog,
   moveTaskToWeek,
   removeTask,
+  onMove,
+  onEdit,
   collapsed = false,
+  now,
 }) {
   const doneBacklogCount = backlog.filter((task) => task.status === "done").length;
 
@@ -27,6 +30,7 @@ export default function BacklogPanel({
           id="backlog"
           className="task-list compact droppable-task-list"
           isEmpty={backlog.length === 0}
+          destType="backlog"
         >
           <SortableContext
             items={backlog.map((task) => task.id)}
@@ -44,7 +48,11 @@ export default function BacklogPanel({
                   onBacklog={sendTaskToBacklog}
                   onMoveToWeek={moveTaskToWeek}
                   onDelete={removeTask}
+                  onMove={onMove}
+                  onEdit={onEdit}
                   compact
+                  destType="backlog"
+                  now={now}
                 />
               ))
             )}

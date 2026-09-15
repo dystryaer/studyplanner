@@ -35,12 +35,12 @@ export function getWeekNumber(date) {
   return getIsoWeek(date).week
 }
 
-export function getDueState(value) {
+export function getDueState(value, now = new Date()) {
   if (!value) return ''
 
   const [year, month, day] = value.split('-').map(Number)
   const dueDate = new Date(year, month - 1, day)
-  const today = new Date()
+  const today = now
 
   const dueDay = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate())
   const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate())
@@ -50,6 +50,12 @@ export function getDueState(value) {
 
   if (diffInDays < 0) return 'overdue'
   if (diffInDays <= 2) return 'soon'
+  return ''
+}
+
+export function formatTimeRange(startTime, endTime) {
+  if (startTime && endTime) return `${startTime} - ${endTime}`
+  if (startTime) return startTime
   return ''
 }
 

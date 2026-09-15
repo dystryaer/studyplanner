@@ -1,3 +1,4 @@
+import { parseTaskDestination } from "../domain/plannerState.js";
 import { plannerActionTypes } from "./plannerReducer.js";
 
 export const addTaskAction = (task) => ({
@@ -10,6 +11,11 @@ export const addEventAction = (event) => ({
   payload: event,
 });
 
+export const updateEventAction = (id, patch) => ({
+  type: plannerActionTypes.UPDATE_EVENT,
+  payload: { id, patch },
+});
+
 export const removeEventAction = (id) => ({
   type: plannerActionTypes.REMOVE_EVENT,
   payload: { id },
@@ -20,14 +26,14 @@ export const toggleTaskDoneAction = (id, weekKey = null) => ({
   payload: { id, weekKey },
 });
 
-export const moveTaskToWeekAction = (id, weekKey) => ({
-  type: plannerActionTypes.MOVE_TASK_TO_WEEK,
-  payload: { id, weekKey },
+export const updateTaskAction = (id, patch) => ({
+  type: plannerActionTypes.UPDATE_TASK,
+  payload: { id, ...patch },
 });
 
-export const moveTaskToBacklogAction = (id) => ({
-  type: plannerActionTypes.MOVE_TASK_TO_BACKLOG,
-  payload: { id },
+export const placeTaskAction = (id, destination, beforeId, status) => ({
+  type: plannerActionTypes.PLACE_TASK,
+  payload: { id, destination: parseTaskDestination(destination), beforeId, status },
 });
 
 export const addDailyTaskAction = (task) => ({
@@ -40,6 +46,16 @@ export const toggleDailyTaskDoneAction = (id) => ({
   payload: { id },
 });
 
+export const setDailyTaskStatusAction = (id, status) => ({
+  type: plannerActionTypes.SET_DAILY_TASK_STATUS,
+  payload: { id, status },
+});
+
+export const setDailyTaskPausedAction = (id, paused) => ({
+  type: plannerActionTypes.SET_DAILY_TASK_PAUSED,
+  payload: { id, paused },
+});
+
 export const removeDailyTaskAction = (id) => ({
   type: plannerActionTypes.REMOVE_DAILY_TASK,
   payload: { id },
@@ -50,21 +66,11 @@ export const removeTaskAction = (id) => ({
   payload: { id },
 });
 
-export const moveTaskByDnDAction = (taskId, toContainer, targetIndex, weekKey) => ({
-  type: plannerActionTypes.MOVE_TASK_BY_DND,
-  payload: {
-    taskId,
-    toContainer,
-    targetIndex,
-    weekKey,
-  },
-});
-
-export const moveDailyTaskByDnDAction = (taskId, targetIndex) => ({
+export const moveDailyTaskByDnDAction = (taskId, beforeId = null) => ({
   type: plannerActionTypes.MOVE_DAILY_TASK_BY_DND,
   payload: {
     taskId,
-    targetIndex,
+    beforeId,
   },
 });
 

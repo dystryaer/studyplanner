@@ -1,6 +1,7 @@
 import { CSS } from "@dnd-kit/utilities";
 import { useSortable } from "@dnd-kit/sortable";
 import TaskCard from "./TaskCard";
+import { GripIcon } from "./Icons";
 
 export default function SortableTaskCard({
   task,
@@ -9,10 +10,14 @@ export default function SortableTaskCard({
   onBacklog,
   onMoveToWeek,
   onDelete,
+  onMove,
+  onEdit,
   compact = false,
   hideWeekAction = false,
-  hideDeleteAction = false,
   donePanel = false,
+  destType = "task-group",
+  weekKey,
+  now,
 }) {
   const {
     attributes,
@@ -24,16 +29,13 @@ export default function SortableTaskCard({
   } = useSortable({
     id: task.id,
     data: {
-      type: "task",
-      task,
-      containerId:
-        task.bucket === "daily"
-          ? "daily"
-          : task.bucket === "backlog"
-          ? "backlog"
-          : task.status === "done"
-          ? "week-done"
-          : "week",
+      kind: task.bucket === "daily" ? "routine" : "task",
+      destType: task.bucket === "daily" ? "routine" : destType,
+      recordId: task.id,
+      categoryId: task.categoryId,
+      bucket: task.bucket,
+      status: task.status,
+      weekKey,
     },
   });
 
@@ -43,7 +45,6 @@ export default function SortableTaskCard({
     opacity: isDragging ? 0.35 : 1,
     zIndex: isDragging ? 999 : "auto",
     position: "relative",
-    touchAction: "none",
   };
 
   return (
@@ -51,8 +52,6 @@ export default function SortableTaskCard({
       ref={setNodeRef}
       style={style}
       className={`sortable-task-card ${isDragging ? "is-dragging" : ""}`}
-      {...attributes}
-      {...listeners}
     >
       <TaskCard
         task={task}
@@ -61,10 +60,24 @@ export default function SortableTaskCard({
         onBacklog={onBacklog}
         onMoveToWeek={onMoveToWeek}
         onDelete={onDelete}
+        onMove={onMove}
+        onEdit={onEdit}
         compact={compact}
         hideWeekAction={hideWeekAction}
-        hideDeleteAction={hideDeleteAction}
         donePanel={donePanel}
+        now={now}
+        dragHandle={(
+          <button
+            type="button"
+            className="drag-handle"
+            aria-label="Drag task"
+            title="Drag task"
+            {...attributes}
+            {...listeners}
+          >
+            <GripIcon />
+          </button>
+        )}
       />
     </div>
   );

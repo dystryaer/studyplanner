@@ -2,7 +2,13 @@
 
 React-Anwendung mit lokalem Speicher und Supabase-Synchronisierung. Änderungen werden zuerst pro Konto im Browser gespeichert. Der Server akzeptiert sie nur, wenn die erwartete Revision noch aktuell ist. Bei einem Konflikt entscheidet der Nutzer, welche Version bestehen bleibt; die verdrängte Version wird als lokale Wiederherstellungskopie aufbewahrt.
 
-Bestehende Browser-Sitzungen ben?tigen nach diesem Update einmalig eine neue Anmeldung, damit das Konto f?r den lokalen Zugriff ausdr?cklich gespeichert wird.
+Die Wochenansicht gruppiert Aufgaben nach Kategorie und zeigt daneben Termine in einer Agenda. Aufgaben brauchen keinen festen Tag. Ein optionaler Tag und Zeitrahmen bleiben von der Deadline getrennt. Termine erscheinen sowohl im Monatskalender als auch in der Wochenagenda. Offene Aufgaben aus früheren Wochen bleiben erhalten, bis du sie ausdrücklich übernimmst oder in den Backlog verschiebst.
+
+Auf schmalen Bildschirmen startet die App mit der Woche. Die untere Navigation führt zu Woche, Routinen, Kalender, Backlog und den Eingabeformularen. Routinen lassen sich pausieren oder für heute überspringen; um 04:00 Uhr beginnt ein neuer Tag. Die Filter Upcoming und Overdue zeigen offene Deadlines aus allen Wochen und dem Backlog.
+
+Das Speicherformat ist jetzt Version 3. Bestehende Daten werden übernommen. Bereits geöffnete ältere App-Versionen müssen neu geladen werden, bevor sie diesen Plan weiter bearbeiten können.
+
+Bestehende Browser-Sitzungen benötigen nach diesem Update einmalig eine neue Anmeldung, damit das Konto für den lokalen Zugriff ausdrücklich gespeichert wird.
 
 ## Lokal ohne Docker testen
 

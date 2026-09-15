@@ -1,6 +1,6 @@
 import { formatDueDate, formatTimeRange, getDueState } from "../utils/date";
 import { getCategoryCardColors } from "../utils/color";
-import { UndoIcon, CheckIcon, WeekIcon, BacklogIcon, CloseIcon } from "./Icons";
+import { UndoIcon, CheckIcon, WeekIcon, BacklogIcon, CloseIcon, MoveIcon, EditIcon } from "./Icons";
 import { defaultTaskCategories } from "../data/defaultCategories";
 
 export default function TaskCard({
@@ -84,13 +84,13 @@ export default function TaskCard({
 
           {onMove ? (
             <button type="button" onClick={() => onMove(task)} aria-label="Move to" title="Move to">
-              Move to
+              <MoveIcon />
             </button>
           ) : null}
 
           {onEdit ? (
             <button type="button" onClick={() => onEdit(task)} aria-label="Edit task" title="Edit task">
-              Edit
+              <EditIcon />
             </button>
           ) : null}
 

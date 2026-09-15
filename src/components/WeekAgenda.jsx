@@ -6,7 +6,7 @@ import { getCategoryCardColors } from "../utils/color";
 import { defaultTaskCategories } from "../data/defaultCategories";
 import DroppableDay from "./DroppableDay";
 import EventCard from "./EventCard";
-import { GripIcon } from "./Icons";
+import { GripIcon, MoveIcon, EditIcon } from "./Icons";
 
 function AgendaTaskChip({ task, taskCategories, onMove, onEdit }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -34,12 +34,14 @@ function AgendaTaskChip({ task, taskCategories, onMove, onEdit }) {
       <span className="agenda-task-category">{category.label}</span>
       {task.status === "done" ? <span className="agenda-task-status">Done</span> : null}
       <span className="agenda-task-time">{formatTimeRange(task.plannedSlot?.startTime, task.plannedSlot?.endTime)}</span>
-      {onEdit ? (
-        <button type="button" onClick={() => onEdit(task)} aria-label="Edit task">Edit</button>
-      ) : null}
-      {onMove ? (
-        <button type="button" onClick={() => onMove(task)} aria-label="Move to">Move to</button>
-      ) : null}
+      <div className="task-actions task-actions-top">
+        {onEdit ? (
+          <button type="button" onClick={() => onEdit(task)} aria-label="Edit task" title="Edit task"><EditIcon /></button>
+        ) : null}
+        {onMove ? (
+          <button type="button" onClick={() => onMove(task)} aria-label="Move to" title="Move to"><MoveIcon /></button>
+        ) : null}
+      </div>
     </div>
   );
 }

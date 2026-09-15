@@ -4,7 +4,7 @@ import { defaultEventCategories } from "../data/defaultCategories";
 import { eventDragId } from "../domain/dragRules.js";
 import { mixHex, getReadableTextColor } from "../utils/color";
 import { formatDueDate, formatWeekdayShort } from "../utils/date";
-import { CloseIcon, GripIcon } from "./Icons";
+import { CloseIcon, GripIcon, MoveIcon, EditIcon } from "./Icons";
 
 export default function EventCard({
   event,
@@ -62,12 +62,12 @@ export default function EventCard({
         <div className="task-actions task-actions-top">
           {onEdit ? (
             <button type="button" onClick={() => onEdit(event)} aria-label="Edit appointment" title="Edit appointment">
-              Edit
+              <EditIcon />
             </button>
           ) : null}
           {onMove ? (
             <button type="button" onClick={() => onMove(event)} aria-label="Move appointment" title="Move appointment">
-              Move to
+              <MoveIcon />
             </button>
           ) : null}
           {onDelete ? (

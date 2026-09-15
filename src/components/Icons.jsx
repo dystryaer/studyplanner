@@ -177,3 +177,19 @@ export function LogoutIcon() {
     </svg>
   );
 }
+
+export function MoveIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 12h12M12 8l4 4-4 4M16 4h4v16h-4" />
+    </svg>
+  );
+}
+
+export function EditIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m16 4 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15l-1 6Z" />
+    </svg>
+  );
+}

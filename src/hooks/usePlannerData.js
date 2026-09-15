@@ -1,32 +1,15 @@
-import { usePlannerStore } from "./usePlannerStore";
-import { usePlannerSelectors } from "./usePlannerSelectors";
-import { usePlannerActions } from "./usePlannerActions";
+import { usePlannerStore } from './usePlannerStore.js';
+import { usePlannerSelectors } from './usePlannerSelectors.js';
+import { usePlannerActions } from './usePlannerActions.js';
 
-export function usePlannerData() {
-  const store = usePlannerStore();
-
+export function usePlannerData(userId) {
+  const store = usePlannerStore(userId);
   const selectors = usePlannerSelectors({
-    data: store.data,
-    weekOffset: store.weekOffset,
-    calendarDate: store.calendarDate,
-    selectedDate: store.selectedDate,
+    data: store.data, weekOffset: store.weekOffset, calendarDate: store.calendarDate,
+    selectedDate: store.selectedDate, today: store.today,
   });
-
   const actions = usePlannerActions({
-    dispatch: store.dispatch,
-    setTaskForm: store.setTaskForm,
-    setEventForm: store.setEventForm,
-    taskForm: store.taskForm,
-    eventForm: store.eventForm,
-    dailyTaskForm: store.dailyTaskForm,
-    setDailyTaskForm: store.setDailyTaskForm,
-    activeWeekKey: selectors.activeWeekKey,
-    setWeekOffset: store.setWeekOffset,
+    dispatch: store.dispatch, activeWeekKey: selectors.activeWeekKey, setWeekOffset: store.setWeekOffset,
   });
-
-  return {
-    ...store,
-    ...selectors,
-    ...actions,
-  };
+  return { ...store, ...selectors, ...actions };
 }

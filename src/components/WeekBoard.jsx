@@ -5,6 +5,8 @@ import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 
 export default function WeekBoard({
   weekTasks,
+  plannedWeekTasks,
+  doneWeekTasks,
   taskCategories = [],
   toggleDone,
   sendTaskToBacklog,
@@ -20,14 +22,11 @@ export default function WeekBoard({
   setSelectedDate,
   removeEvent,
   removeTask,
-  weekEvents,
   weekRange,
   activeWeekDate,
   setWeekOffset,
   allEvents,
 }) {
-  const plannedWeekTasks = weekTasks.filter((task) => task.status !== "done");
-  const doneWeekTasks = weekTasks.filter((task) => task.status === "done");
 
   return (
     <section className="board-grid">
@@ -114,7 +113,6 @@ export default function WeekBoard({
         setCalendarDate={setCalendarDate}
         setSelectedDate={setSelectedDate}
         removeEvent={removeEvent}
-        weekEvents={weekEvents}
         weekRange={weekRange}
         activeWeekDate={activeWeekDate}
         setWeekOffset={setWeekOffset}

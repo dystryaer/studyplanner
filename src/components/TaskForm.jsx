@@ -1,23 +1,42 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-export default function TaskForm({
-  taskForm,
-  setTaskForm,
-  addTask,
-  taskCategories
-}) {
+export default function TaskForm({ addTask, taskCategories = [] }) {
+  const [title, setTitle] = useState("");
+  const [categoryId, setCategoryId] = useState(
+    () => taskCategories[0]?.id ?? ""
+  );
+  const [due, setDue] = useState("");
   const [titleError, setTitleError] = useState("");
+
+  useEffect(() => {
+    setCategoryId((current) => {
+      if (taskCategories.some((category) => category.id === current)) {
+        return current;
+      }
+      return taskCategories[0]?.id ?? "";
+    });
+  }, [taskCategories]);
 
   function handleSubmit(e) {
     e.preventDefault();
 
-    if (!taskForm.title.trim()) {
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
       setTitleError("A name is required.");
       return;
     }
 
     setTitleError("");
-    addTask(e);
+    const saved = addTask({
+      title: trimmedTitle,
+      categoryId,
+      due: due || null,
+    });
+
+    if (saved) {
+      setTitle("");
+      setDue("");
+    }
   }
 
   return (
@@ -26,9 +45,9 @@ export default function TaskForm({
 
       <form className="form-field" onSubmit={handleSubmit}>
         <input
-          value={taskForm.title}
+          value={title}
           onChange={(e) => {
-            setTaskForm({ ...taskForm, title: e.target.value });
+            setTitle(e.target.value);
 
             if (e.target.value.trim()) {
               setTitleError("");
@@ -46,17 +65,8 @@ export default function TaskForm({
         )}
 
         <select
-          value={taskForm.categoryId}
-          onChange={(e) => {
-            const selectedCategory = taskCategories.find(
-              (category) => category.id === e.target.value
-            );
-            setTaskForm({
-              ...taskForm,
-              categoryId: e.target.value,
-              subject: selectedCategory?.label ?? "",
-            });
-          }}
+          value={categoryId}
+          onChange={(e) => setCategoryId(e.target.value)}
         >
           {taskCategories.map((category) => (
             <option key={category.id} value={category.id}>
@@ -68,10 +78,8 @@ export default function TaskForm({
         <input
           type="date"
           lang="en-GB"
-          value={taskForm.due}
-          onChange={(e) =>
-            setTaskForm({ ...taskForm, due: e.target.value })
-          }
+          value={due}
+          onChange={(e) => setDue(e.target.value)}
           placeholder="Due date (optional)"
         />
 

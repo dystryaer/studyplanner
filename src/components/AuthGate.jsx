@@ -1,5 +1,30 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { isAuthRetryableFetchError } from "@supabase/supabase-js";
 import { supabase } from "../api/supabaseClient";
+
+const OWNER_KEY = "studyplanner:local-owner";
+
+function readRememberedAccount() {
+  try {
+    const value = JSON.parse(localStorage.getItem(OWNER_KEY));
+    if (value?.signedOut === true) return { user: null, signedOut: true };
+    if (value?.authorizing === true) return { user: null, signedOut: false };
+    if (typeof value?.user?.id === "string" && typeof value.user.email === "string") {
+      return { user: { id: value.user.id, email: value.user.email }, signedOut: false };
+    }
+  } catch {}
+  return { user: null, signedOut: true };
+}
+
+function rememberAccount(user) {
+  try {
+    localStorage.removeItem(OWNER_KEY);
+    localStorage.setItem(OWNER_KEY, JSON.stringify({
+      user: user ? { id: user.id, email: user.email } : null,
+      signedOut: !user,
+    }));
+  } catch {}
+}
 
 function PlannerMark() {
   return (
@@ -27,35 +52,38 @@ function PlannerMark() {
 }
 
 export default function AuthGate({ children }) {
-  const [user, setUser] = useState(null);
+  const isDemo = import.meta.env.VITE_DEV_DEMO === "true";
+  const [remembered] = useState(readRememberedAccount);
+  const allowSession = useRef(!remembered.signedOut);
+  const [user, setUser] = useState(remembered.user);
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !remembered.signedOut && !remembered.user);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    async function loadUser() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      setUser(user ?? null);
-      setLoading(false);
-    }
-
-    loadUser();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    let active = true;
+    let changed = false;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!active || !allowSession.current) return;
+      if (!session && event === "INITIAL_SESSION") return;
+      changed = true;
+      rememberAccount(session?.user ?? null);
       setUser(session?.user ?? null);
       setLoading(false);
     });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (!active || changed || !allowSession.current) return;
+      const account = session?.user ?? (isAuthRetryableFetchError(error) ? remembered.user : null);
+      if (session?.user) rememberAccount(session.user);
+      else if (!isAuthRetryableFetchError(error)) rememberAccount(null);
+      setUser(account);
+      setLoading(false);
+    }).catch(() => { if (active) setLoading(false); });
+    return () => { active = false; subscription.unsubscribe(); };
+  }, [remembered]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -75,12 +103,15 @@ export default function AuthGate({ children }) {
         setMode("login");
         setPassword("");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
         if (error) throw error;
+        allowSession.current = true;
+        rememberAccount(data.user);
+        setUser(data.user);
       }
     } catch (error) {
       setMessage(error.message ?? "Something went wrong.");
@@ -90,8 +121,10 @@ export default function AuthGate({ children }) {
   }
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    allowSession.current = false;
+    rememberAccount(null);
     setUser(null);
+    await supabase.auth.signOut();
   }
 
   async function handleGoogleLogin() {
@@ -99,6 +132,8 @@ export default function AuthGate({ children }) {
     setMessage("");
 
     try {
+      localStorage.setItem(OWNER_KEY, JSON.stringify({ authorizing: true }));
+      allowSession.current = true;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -213,6 +248,7 @@ export default function AuthGate({ children }) {
                   {message}
                 </p>
               )}
+              {isDemo && <p>Local demo: alice@planner.test or bob@planner.test. Password: PlannerDev-2026!</p>}
               <div className="submit-btns-row">
                 <button type="submit" disabled={submitting}>
                   {submitting
@@ -221,14 +257,14 @@ export default function AuthGate({ children }) {
                     ? "Create account"
                     : "Sign in"}
                 </button>
-                <button type="button" onClick={handleGoogleLogin} disabled={submitting}>
+                {!isDemo && <button type="button" onClick={handleGoogleLogin} disabled={submitting}>
                   Continue with Google
-                </button>
+                </button>}
               </div>
               
             </form>
 
-            <div className="auth-footer">
+            {!isDemo && <div className="auth-footer">
               <span>
                 {isSignup ? "Already have an account?" : "No account yet?"}
               </span>
@@ -244,7 +280,7 @@ export default function AuthGate({ children }) {
               >
                 {isSignup ? "Sign in instead" : "Create one"}
               </button>
-            </div>
+            </div>}
           </div>
         </section>
       </div>

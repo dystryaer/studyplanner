@@ -15,3 +15,9 @@ pnpm-debug.log*
 src/projekt-export.md
 scripts/export-code-to-md.js
 projekt-export.md
+
+playwright-report/
+test-results/
+supabase/.temp/
+supabase/.branches/
+.local-dev/

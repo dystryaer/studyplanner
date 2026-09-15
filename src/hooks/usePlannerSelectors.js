@@ -8,15 +8,16 @@ import {
   getSelectedDateEvents,
   getWeekEvents,
   getWeekTasks,
+  getTasksByContainer,
 } from "../utils/plannerSelectors";
 import { defaultTaskCategories, defaultEventCategories } from "../data/defaultCategories";
 
-export function usePlannerSelectors({ data, weekOffset, calendarDate, selectedDate }) {
+export function usePlannerSelectors({ data, weekOffset, calendarDate, selectedDate, today }) {
   const activeWeekDate = useMemo(() => {
-    const base = new Date();
+    const base = new Date(today);
     base.setDate(base.getDate() + weekOffset * 7);
     return getStartOfWeek(base);
-  }, [weekOffset]);
+  }, [weekOffset, today]);
 
   const activeWeekKey = useMemo(() => getWeekKey(activeWeekDate), [activeWeekDate]);
 
@@ -70,14 +71,11 @@ export function usePlannerSelectors({ data, weekOffset, calendarDate, selectedDa
     return filtered.length > 0 ? filtered : defaultEventCategories;
   }, [savedCategories]);
 
-  const plannedWeekTasksCount = useMemo(
-    () => weekTasks.filter((t) => t.status === "planned").length,
-    [weekTasks]
+  const plannedWeekTasks = useMemo(
+    () => getTasksByContainer(data.tasks, data.dailyTasks, "week", activeWeekKey), [data.tasks, data.dailyTasks, activeWeekKey]
   );
-
-  const doneWeekTasksCount = useMemo(
-    () => weekTasks.filter((t) => t.status === "done").length,
-    [weekTasks]
+  const doneWeekTasks = useMemo(
+    () => getTasksByContainer(data.tasks, data.dailyTasks, "week-done", activeWeekKey), [data.tasks, data.dailyTasks, activeWeekKey]
   );
 
   const doneDailyTasksCount = useMemo(
@@ -100,8 +98,10 @@ export function usePlannerSelectors({ data, weekOffset, calendarDate, selectedDa
     backlog,
     weekTasks,
     dailyTasks,
-    plannedWeekTasksCount,
-    doneWeekTasksCount,
+    plannedWeekTasks,
+    doneWeekTasks,
+    plannedWeekTasksCount: plannedWeekTasks.length,
+    doneWeekTasksCount: doneWeekTasks.length,
     doneDailyTasksCount,
     taskCategories,
     eventCategories,

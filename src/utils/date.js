@@ -1,3 +1,5 @@
+import { getIsoWeek } from './calendar.js'
+
 export function formatDate(date) {
   const day = String(date.getDate()).padStart(2, '0')
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -30,17 +32,7 @@ export function formatSelectedDate(date) {
 }
 
 export function getWeekNumber(date) {
-  const target = new Date(date)
-  target.setHours(0, 0, 0, 0)
-
-  const dayNr = (target.getDay() + 6) % 7
-  target.setDate(target.getDate() - dayNr + 3)
-
-  const firstThursday = new Date(target.getFullYear(), 0, 4)
-  const firstDayNr = (firstThursday.getDay() + 6) % 7
-  firstThursday.setDate(firstThursday.getDate() - firstDayNr + 3)
-
-  return 1 + Math.round((target - firstThursday) / 604800000)
+  return getIsoWeek(date).week
 }
 
 export function getDueState(value) {

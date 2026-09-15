@@ -11,7 +11,6 @@ export default function SortableTaskCard({
   onDelete,
   compact = false,
   hideWeekAction = false,
-  hideBacklogAction = false,
   hideDeleteAction = false,
   donePanel = false,
 }) {
@@ -64,7 +63,6 @@ export default function SortableTaskCard({
         onDelete={onDelete}
         compact={compact}
         hideWeekAction={hideWeekAction}
-        hideBacklogAction={hideBacklogAction}
         hideDeleteAction={hideDeleteAction}
         donePanel={donePanel}
       />

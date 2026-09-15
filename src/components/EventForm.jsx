@@ -1,27 +1,39 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-export default function EventForm({
-  eventForm,
-  setEventForm,
-  addEvent,
-  eventCategories = [],
-}) {
+export default function EventForm({ addEvent, eventCategories = [] }) {
+  const [title, setTitle] = useState("");
+  const [categoryId, setCategoryId] = useState(
+    () => eventCategories[0]?.id ?? ""
+  );
+  const [date, setDate] = useState("");
+  const [startTime, setStartTime] = useState("10:00");
+  const [endTime, setEndTime] = useState("11:00");
   const [titleError, setTitleError] = useState("");
   const [dateError, setDateError] = useState("");
+
+  useEffect(() => {
+    setCategoryId((current) => {
+      if (eventCategories.some((category) => category.id === current)) {
+        return current;
+      }
+      return eventCategories[0]?.id ?? "";
+    });
+  }, [eventCategories]);
 
   function handleSubmit(e) {
     e.preventDefault();
 
+    const trimmedTitle = title.trim();
     let hasError = false;
 
-    if (!eventForm.title.trim()) {
+    if (!trimmedTitle) {
       setTitleError("A name is required.");
       hasError = true;
     } else {
       setTitleError("");
     }
 
-    if (!eventForm.date) {
+    if (!date) {
       setDateError("A date is required.");
       hasError = true;
     } else {
@@ -30,7 +42,18 @@ export default function EventForm({
 
     if (hasError) return;
 
-    addEvent(e);
+    const saved = addEvent({
+      title: trimmedTitle,
+      categoryId,
+      date,
+      startTime,
+      endTime,
+    });
+
+    if (saved) {
+      setTitle("");
+      setDate("");
+    }
   }
 
   return (
@@ -39,9 +62,9 @@ export default function EventForm({
 
       <form className="form-field" onSubmit={handleSubmit}>
         <input
-          value={eventForm.title}
+          value={title}
           onChange={(e) => {
-            setEventForm({ ...eventForm, title: e.target.value });
+            setTitle(e.target.value);
 
             if (e.target.value.trim()) {
               setTitleError("");
@@ -59,10 +82,8 @@ export default function EventForm({
         )}
 
         <select
-          value={eventForm.categoryId}
-          onChange={(e) =>
-            setEventForm({ ...eventForm, categoryId: e.target.value })
-          }
+          value={categoryId}
+          onChange={(e) => setCategoryId(e.target.value)}
         >
           {eventCategories.map((category) => (
             <option key={category.id} value={category.id}>
@@ -73,9 +94,9 @@ export default function EventForm({
 
         <input
           type="date"
-          value={eventForm.date}
+          value={date}
           onChange={(e) => {
-            setEventForm({ ...eventForm, date: e.target.value });
+            setDate(e.target.value);
 
             if (e.target.value) {
               setDateError("");
@@ -94,17 +115,13 @@ export default function EventForm({
         <div className="form-row">
           <input
             type="time"
-            value={eventForm.startTime}
-            onChange={(e) =>
-              setEventForm({ ...eventForm, startTime: e.target.value })
-            }
+            value={startTime}
+            onChange={(e) => setStartTime(e.target.value)}
           />
           <input
             type="time"
-            value={eventForm.endTime}
-            onChange={(e) =>
-              setEventForm({ ...eventForm, endTime: e.target.value })
-            }
+            value={endTime}
+            onChange={(e) => setEndTime(e.target.value)}
           />
         </div>
 

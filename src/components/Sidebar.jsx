@@ -8,12 +8,6 @@ import DailyTasksPanel from "./DailyTasksPanel";
 export default function Sidebar({
   sidebarMode,
   setSidebarMode,
-  taskForm,
-  setTaskForm,
-  eventForm,
-  setEventForm,
-  dailyTaskForm,
-  setDailyTaskForm,
   addTask,
   addEvent,
   addDailyTask,
@@ -25,7 +19,6 @@ export default function Sidebar({
   toggleDailyTaskDone,
   removeDailyTask,
   removeTask,
-  reorderDailyTasks,
   taskCategories,
   eventCategories,
 }) {
@@ -86,33 +79,26 @@ export default function Sidebar({
                 </div>
             </section>
 
-            {sidebarMode === 'task' && (
+            <div hidden={sidebarMode !== "task"}>
                 <TaskForm
-                    taskForm={taskForm}
-                    setTaskForm={setTaskForm}
                     addTask={addTask}
                     taskCategories={taskCategories}
                 />
-            )}
+            </div>
 
-            {sidebarMode === 'event' && (
+            <div hidden={sidebarMode !== "event"}>
                 <EventForm
-                    eventForm={eventForm}
-                    setEventForm={setEventForm}
                     addEvent={addEvent}
                     eventCategories={eventCategories}
                 />
-            )}
+            </div>
 
-            {sidebarMode === 'daily' && (
+            <div hidden={sidebarMode !== "daily"}>
                 <DailyTaskForm
-                    dailyTaskForm={dailyTaskForm}
-                    setDailyTaskForm={setDailyTaskForm}
                     addDailyTask={addDailyTask}
                     taskCategories={taskCategories}
-                    reorderDailyTasks={reorderDailyTasks}
                 />
-            )}
+            </div>
 
             <DailyTasksPanel
                 dailyTasks={dailyTasks}

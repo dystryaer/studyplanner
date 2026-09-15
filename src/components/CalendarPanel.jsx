@@ -144,7 +144,7 @@ export default function CalendarPanel({
 
         <p>
           {showDate ? `${formatWeekdayShort(event.date)} · ${formatDueDate(event.date)} · ` : ""}
-          {event.startTime} - {event.endTime} · {categoryLabel} {/* make vercel see the change please */}
+          {event.startTime} - {event.endTime} · {categoryLabel}
         </p>
       </article>
     );

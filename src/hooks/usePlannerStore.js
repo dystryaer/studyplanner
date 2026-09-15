@@ -1,140 +1,73 @@
-import { useEffect, useReducer, useState } from "react";
-import { initialPlannerState } from "../data/initialPlannerState";
-import { plannerActionTypes, plannerReducer } from "../reducers/plannerReducer";
-import { plannerRepository } from "../data/plannerRepository";
-import { defaultTaskCategories, defaultEventCategories } from "../data/defaultCategories";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPlannerSession } from '../data/plannerSession.js';
+import { createInitialPlannerState } from '../domain/plannerState.js';
+import { createRemotePlannerApi } from '../api/remotePlannerApi.js';
+import { supabase } from '../api/supabaseClient.js';
+import { acquirePlannerLock } from '../data/plannerLock.js';
 
-export function usePlannerStore() {
-  const [data, dispatch] = useReducer(plannerReducer, initialPlannerState);
-  const [isHydrated, setIsHydrated] = useState(false);
+const remote = createRemotePlannerApi(supabase);
+
+export function usePlannerStore(userId) {
+  const activeSession = useRef(null);
+  const [snapshot, setSnapshot] = useState(() => ({
+    data: createInitialPlannerState(), status: 'loading', canEdit: false, error: null,
+  }));
   const [weekOffset, setWeekOffset] = useState(0);
-
-  const taskFormDefaultSubject = defaultTaskCategories[0];
-  const eventFormDefaultCategory = defaultEventCategories[0];
-
-  const [taskForm, setTaskForm] = useState({
-    title: "",
-    categoryId: taskFormDefaultSubject.id ?? "other",
-    subject: taskFormDefaultSubject.label ?? "Other",
-    due: "",
-  });
-
-  const [eventForm, setEventForm] = useState({
-    title: "",
-    categoryId: eventFormDefaultCategory.id ?? "other",
-    date: "",
-    startTime: "10:00",
-    endTime: "11:00",
-  });
-
-  const [dailyTaskForm, setDailyTaskForm] = useState({
-    title: "",
-    subject: "Sonstiges",
-  });
-
-  const [theme, setTheme] = useState(() => {
-    try {
-      const raw = localStorage.getItem("studyplanner-app-v1");
-      const parsed = raw ? JSON.parse(raw) : null;
-      const savedTheme = parsed?.userSettings?.theme;
-
-      const initialTheme =
-        savedTheme === "light" || savedTheme === "dark"
-          ? savedTheme
-          : window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
-
-      document.documentElement.setAttribute("data-theme", initialTheme);
-      return initialTheme;
-    } catch {
-      const fallbackTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-
-      document.documentElement.setAttribute("data-theme", fallbackTheme);
-      return fallbackTheme;
-    }
-  });
-
-  useEffect(() => {
-    const savedTheme = data.userSettings?.theme;
-    if ((savedTheme === "light" || savedTheme === "dark") && savedTheme !== theme) {
-      setTheme(savedTheme);
-    }
-  }, [data.userSettings?.theme, theme]);
-
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-  }, [theme]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    plannerRepository.sync({
-      ...data,
-      userSettings: {
-        ...(data.userSettings ?? {}),
-        theme,
-      },
-    });
-  }, [theme, isHydrated]);
-
   const [sidebarMode, setSidebarMode] = useState(null);
-  const [calendarDate, setCalendarDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [calendarDate, setCalendarDate] = useState(() => new Date());
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [today, setToday] = useState(() => new Date());
+  const [systemTheme, setSystemTheme] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function hydratePlanner() {
-      const loadedState = await plannerRepository.load();
-
-      if (!isMounted) return;
-
-      dispatch({
-        type: plannerActionTypes.HYDRATE_PLANNER,
-        payload: loadedState,
-      });
-
-      setIsHydrated(true);
-    }
-
-    hydratePlanner();
-
-    return () => {
-      isMounted = false;
+    let mounted = true;
+    const session = createPlannerSession({ userId, storage: localStorage, remote, clock: () => new Date(), acquireLock: acquirePlannerLock });
+    activeSession.current = session;
+    const update = () => { if (mounted) setSnapshot(session.getSnapshot()); };
+    const unsubscribe = session.subscribe(update);
+    update();
+    session.start().catch(error => {
+      if (mounted) setSnapshot(current => ({ ...current, status: 'error', error, canEdit: false }));
+    });
+    const advance = () => {
+      const now = new Date();
+      setToday(current => current.toDateString() === now.toDateString() ? current : now);
+      session.dispatch({ type: 'APPLY_TIME_RULES' });
     };
+    const online = () => { session.retry(); };
+    const visible = () => { if (document.visibilityState === 'visible') advance(); };
+    const timer = setInterval(advance, 30000);
+    window.addEventListener('online', online);
+    document.addEventListener('visibilitychange', visible);
+    return () => {
+      mounted = false;
+      clearInterval(timer);
+      unsubscribe();
+      window.removeEventListener('online', online);
+      document.removeEventListener('visibilitychange', visible);
+      session.dispose();
+      if (activeSession.current === session) activeSession.current = null;
+    };
+  }, [userId]);
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const change = () => setSystemTheme(media.matches ? 'dark' : 'light');
+    media.addEventListener('change', change);
+    return () => media.removeEventListener('change', change);
   }, []);
 
-  useEffect(() => {
-    if (!isHydrated) return;
+  const theme = snapshot.data.userSettings.theme ?? systemTheme;
+  useEffect(() => { document.documentElement.dataset.theme = theme; }, [theme]);
 
-    const timeoutId = setTimeout(() => {
-      plannerRepository.sync(data);
-    }, 400);
-
-    return () => clearTimeout(timeoutId);
-  }, [data, isHydrated]);
-
+  const dispatch = useCallback(action => activeSession.current?.dispatch(action) ?? false, []);
+  const retrySync = useCallback(() => activeSession.current?.retry(), []);
+  const resolveConflict = useCallback(choice => activeSession.current?.resolveConflict(choice), []);
+  const exportLocal = useCallback(() => activeSession.current?.exportLocal(), []);
+  const exportLegacy = useCallback(() => activeSession.current?.exportLegacy(), []);
   return {
-    data,
-    dispatch,
-    isHydrated,
-    weekOffset,
-    setWeekOffset,
-    taskForm,
-    setTaskForm,
-    eventForm,
-    setEventForm,
-    dailyTaskForm,
-    setDailyTaskForm,
-    theme,
-    setTheme,
-    sidebarMode,
-    setSidebarMode,
-    calendarDate,
-    setCalendarDate,
-    selectedDate,
-    setSelectedDate,
+    ...snapshot, dispatch, retrySync, resolveConflict, exportLocal, exportLegacy,
+    theme, today, weekOffset, setWeekOffset, sidebarMode, setSidebarMode,
+    calendarDate, setCalendarDate, selectedDate, setSelectedDate,
   };
 }

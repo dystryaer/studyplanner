@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { usePlannerData } from "../hooks/usePlannerData";
 import { defaultEventCategories, defaultTaskCategories } from "../data/defaultCategories";
-import { updateUserSettingsAction } from "../reducers/plannerActions";
-import { mixHex, getReadableTextColor, getCategoryCardColors } from "../utils/color";
+import { getCategoryCardColors } from "../utils/color";
 import {
   CloseIcon,
   PlusIcon,
@@ -20,10 +18,10 @@ const emptyCategory = (kind) => ({
   baseColor: "#6568f1",
 });
 
-export default function SettingsModal({ onClose, updateUserSettings, userSettings, setTheme }) {
+export default function SettingsModal({ onClose, updateUserSettings, userSettings, effectiveTheme }) {
   const fallbackCategories = [...defaultTaskCategories, ...defaultEventCategories];
   const [categories, setCategories] = useState(userSettings?.categories?.length ? userSettings.categories : fallbackCategories);
-  const [themeValue, setThemeValue] = useState(userSettings?.theme ?? "light");
+  const [themeValue, setThemeValue] = useState(userSettings?.theme ?? effectiveTheme);
 
   const taskCategories = useMemo(
     () => categories.filter((cat) => cat.kind === "task"),
@@ -44,9 +42,9 @@ export default function SettingsModal({ onClose, updateUserSettings, userSetting
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
-  function updateCategory(id, patch) {
+  function updateCategory(id, kind, patch) {
     setCategories((prev) =>
-      prev.map((cat) => (cat.id === id ? { ...cat, ...patch } : cat)),
+      prev.map((cat) => (cat.id === id && cat.kind === kind ? { ...cat, ...patch } : cat)),
     );
   }
 
@@ -54,18 +52,19 @@ export default function SettingsModal({ onClose, updateUserSettings, userSetting
     setCategories((prev) => [...prev, emptyCategory(kind)]);
   }
 
-  function removeCategory(id) {
-    setCategories((prev) => prev.filter((cat) => cat.id !== id));
+  function removeCategory(id, kind) {
+    setCategories((prev) => prev.filter((cat) => cat.id !== id || cat.kind !== kind));
   }
 
   function save() {
-    updateUserSettings({
+    const saved = updateUserSettings({
       theme: themeValue,
       categories,
     });
 
-    setTheme(themeValue);
-    onClose();
+    if (saved) {
+      onClose();
+    }
   }
 
   function renderCategoryRow(cat) {
@@ -82,7 +81,7 @@ export default function SettingsModal({ onClose, updateUserSettings, userSetting
 
           <input
             value={cat.label}
-            onChange={(e) => updateCategory(cat.id, { label: e.target.value })}
+            onChange={(e) => updateCategory(cat.id, cat.kind, { label: e.target.value })}
             placeholder="Category name"
           />
 
@@ -104,14 +103,14 @@ export default function SettingsModal({ onClose, updateUserSettings, userSetting
             <input
               type="color"
               value={cat.baseColor}
-              onChange={(e) => updateCategory(cat.id, { baseColor: e.target.value })}
+              onChange={(e) => updateCategory(cat.id, cat.kind, { baseColor: e.target.value })}
             />
           </label>
 
           <button
             type="button"
             className="settings-icon-btn settings-delete-btn"
-            onClick={() => removeCategory(cat.id)}
+            onClick={() => removeCategory(cat.id, cat.kind)}
             aria-label={`Delete ${cat.label || "category"}`}
             title="Delete category"
           >
